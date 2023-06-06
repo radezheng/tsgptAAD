@@ -2,20 +2,33 @@
   <div id="app">
     <header>
       <div class="title">{{ title }}</div>
-      <!-- <div class="user-info">
-        <span>{{ username }}</span>
-        <button @click="logout">退出</button>
-      </div> -->
+      <div class="username">
+      <SignOutButton v-if="isAuthenticated"/>
+            <SignInButton v-else />
+          </div>
     </header>
     <router-view></router-view>
   </div>
 </template>
 
 <script lang="ts">
+import { useIsAuthenticated } from './composition-api/useIsAuthenticated';
+import SignInButton from "./components/SignInButton.vue";
+import SignOutButton from "./components/SignOutButton.vue";
 
 export default {
 name: 'App',
 
+components: {
+    SignInButton,
+    SignOutButton,
+  },
+
+  setup() {
+    const isAuthenticated = useIsAuthenticated();
+    // console.log(isAuthenticated);
+    return { isAuthenticated };
+  },
 
 data() {
     return {
@@ -51,12 +64,17 @@ header {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.username {
+  display: flex;
+  align-items: center;
+}
+
 .title {
   font-size: 24px;
   font-weight: bold;
   text-align: center;
   align-content: center;
-  width: 100%;
+  width: 80%;
 }
 
 .user-info {

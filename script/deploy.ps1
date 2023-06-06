@@ -58,7 +58,7 @@ az sql server firewall-rule create --resource-group $RESOURCE_GROUP_NAME --serve
 Write-Host "Creating  Azure SQL DB..." + $DB_NAME
 az sql db create --name $DB_NAME --server $SQL_SERVER_NAME --resource-group $RESOURCE_GROUP_NAME `
   --edition "GeneralPurpose" --family "Gen5" --capacity 2 `
-  --compute-model "Provisioned" --max-size 32GB --zone-redundant false `
+  --compute-model "Provisioned" --license-type BasePrice --max-size 32GB --zone-redundant false `
   --backup-storage-redundancy Local --collation "Latin1_General_100_BIN2_UTF8"
 
 

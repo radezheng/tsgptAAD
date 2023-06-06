@@ -172,6 +172,6 @@ textarea {
 
 button[type="submit"] {
   display: block;
-  margin: 10px auto;
+  /* margin: 10px auto; */
 }
 </style>  

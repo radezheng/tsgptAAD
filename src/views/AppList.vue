@@ -1,6 +1,13 @@
 <template>
-  <div class="centered">
-    <h2 class="centered">Chat App List</h2>
+  <div v-if="isAuthenticated" class="centered">
+
+    <div v-if="!isAdmin" class="centered">
+      <h2 class="centered">无权访问，请联系管理员。</h2>
+    
+  </div>
+    <div v-else>
+      <h2 class="centered">Chat App List</h2>
+
     <div class="righted">
       <button @click="addApp()">Add App</button>
     </div>
@@ -57,12 +64,21 @@
     <div style="color:brown"> {{ errorMsg }}</div>
     <div></div>
   </div>
+
+</div>
+  <div v-else>
+    <h2 class="centered">请先登录<SignInButton/></h2>
+  </div>
 </template>
 
 <script  lang="ts">
 import axios from "axios";
 import { defineComponent } from "vue";
 // import { useRouter } from "vue-router"; 
+import { useIsAuthenticated } from '../composition-api/useIsAuthenticated';
+import SignInButton from "../components/SignInButton.vue";
+import { useMsal } from "../composition-api/useMsal";
+import { msalInstance } from "../authConfig";
 
 interface App {
   app_id: string;
@@ -78,11 +94,33 @@ interface App {
 // const router = useRouter();
 
 export default defineComponent({
+
+  components: {
+    SignInButton,
+  },
+
+  setup() {
+    const isAuthenticated = useIsAuthenticated();
+    let isAdmin = false as boolean;
+
+    const { accounts } = useMsal();
+    if(accounts.value.length > 0) {
+            const user = msalInstance.getActiveAccount();
+            if (user && user.idTokenClaims && user.idTokenClaims.roles) {
+              // console.log("chat.admin->", user.idTokenClaims.roles?.includes("chat.admin"));
+              isAdmin = user.idTokenClaims.roles?.includes("chat.admin");
+            }
+    }
+    // console.log("isAdmin->", isAdmin);
+    return { isAuthenticated, isAdmin };
+  },
+
   data() {
     return {
       apps: [] as App[],
       expandedRows: {} as Record<number, boolean>,
-      errorMsg: "",
+      errorMsg: "" as string,
+      // isAuthenticated: isAuthenticated,
     };
   },
   mounted() {
@@ -99,6 +137,7 @@ export default defineComponent({
       this.expandedRows[index] = !this.expandedRows[index];
     },
     async getAppList() {
+      var that = this;
       try {
         const resp = await axios.get("/api/gptapps/list");
         axios.defaults.headers.common["Authorization"] =
@@ -106,7 +145,9 @@ export default defineComponent({
         this.apps = resp.data;
       } catch (error) {
         console.error("Failed to fetch app list:", error);
-        // this.errorMsg = error.code + ":" + error.response.data;
+        if(error){
+          that.errorMsg = error.toString();
+        }
       }
     },
     goToChatGPT(appName: string) {

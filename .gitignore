@@ -9,6 +9,9 @@ lerna-debug.log*
 .env
 .vscode
 
+*/authConfig.js
+*/authConfig.ts
+
 node_modules
 dist
 dist-ssr
@@ -20,6 +23,7 @@ test.sh
 **/*/*copy*
 *copy*
 *-lock.json
+**/*/*.local.*
 
 # Editor directories and files
 .vscode/*
@@ -31,3 +35,6 @@ test.sh
 *.njsproj
 *.sln
 *.sw?
+src/authConfig.ts
+server/authConfig.js
+

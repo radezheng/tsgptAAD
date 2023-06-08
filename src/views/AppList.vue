@@ -3,71 +3,73 @@
 
     <div v-if="!isAdmin" class="centered">
       <h2 class="centered">无权访问，请联系管理员。</h2>
-    
-  </div>
+
+    </div>
     <div v-else>
       <h2 class="centered">Chat App List</h2>
 
-    <div class="righted">
-      <button @click="addApp()">Add App</button>
+      <div class="righted">
+        <button @click="addApp()">Add App</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th width="1">Expand</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Temperature</th>
+            <th>Max Tokens</th>
+            <!-- <th>Top P</th> -->
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template v-for="(app, index) in apps" :key="index">
+            <tr :style="getRowBackgroundColor(index)">
+              <td>
+                <span @click="toggleExpand(index)">
+                  <template v-if="!expandedRows[index]">
+                    <span>></span>
+                  </template>
+                  <template v-else>
+                    <span>v</span>
+                  </template>
+                </span>
+              </td>
+              <td>
+                <a href="#" @click.prevent="goToChatGPT(app.name)">{{
+                  app.name
+                }}</a>
+              </td>
+              <td>{{ app.description }}</td>
+              <td>{{ app.temperature }}</td>
+              <td>{{ app.max_tokens }}</td>
+              <!-- <td>{{ app.top_p }}</td> -->
+              <td>
+                <button @click="goToChatGPT(app.name)">Chat</button> |
+                <button @click="cloneChatGPT(app.name)">Clone</button> |
+                <button @click="deleteApp(app.app_id)">Delete</button>
+              </td>
+            </tr>
+            <tr v-if="expandedRows[index]">
+              <td colspan="6" class="expanded">
+                <div><strong>Welcome:</strong> {{ app.welcome }}</div>
+                <div><strong>Data Ground:</strong> {{ app.dataground }}</div>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+      <hr />
+      <div style="color:brown"> {{ errorMsg }}</div>
+      <div></div>
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th width="1">Expand</th>
-          <th>Name</th>
-          <th>Description</th>
-          <th>Temperature</th>
-          <th>Max Tokens</th>
-          <!-- <th>Top P</th> -->
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <template v-for="(app, index) in apps" :key="index">
-          <tr :style="getRowBackgroundColor(index)">
-            <td>
-              <span @click="toggleExpand(index)">
-                <template v-if="!expandedRows[index]">
-                  <span>></span>
-                </template>
-                <template v-else>
-                  <span>v</span>
-                </template>
-              </span>
-            </td>
-            <td>
-              <a href="#" @click.prevent="goToChatGPT(app.name)">{{
-                app.name
-              }}</a>
-            </td>
-            <td>{{ app.description }}</td>
-            <td>{{ app.temperature }}</td>
-            <td>{{ app.max_tokens }}</td>
-            <!-- <td>{{ app.top_p }}</td> -->
-            <td>
-              <button @click="goToChatGPT(app.name)">Chat</button> |
-              <button @click="cloneChatGPT(app.name)">Clone</button> |
-              <button @click="deleteApp(app.app_id)">Delete</button>
-            </td>
-          </tr>
-          <tr v-if="expandedRows[index]">
-            <td colspan="6" class="expanded">
-              <div><strong>Welcome:</strong> {{ app.welcome }}</div>
-              <div><strong>Data Ground:</strong> {{ app.dataground }}</div>
-            </td>
-          </tr>
-        </template>
-      </tbody>
-    </table>
-    <hr/>
-    <div style="color:brown"> {{ errorMsg }}</div>
-    <div></div>
-  </div>
 
-</div>
+  </div>
   <div v-else>
-    <h2 class="centered">请先登录<SignInButton/></h2>
+    <h2 class="centered">请先登录
+      <SignInButton />
+    </h2>
   </div>
 </template>
 
@@ -76,9 +78,13 @@ import axios from "axios";
 import { defineComponent } from "vue";
 // import { useRouter } from "vue-router"; 
 import { useIsAuthenticated } from '../composition-api/useIsAuthenticated';
+import { useMsalAuthentication } from "../composition-api/useMsalAuthentication";
+import { InteractionType } from "@azure/msal-browser";
+import { loginRequest } from "../authConfig";
 import SignInButton from "../components/SignInButton.vue";
 import { useMsal } from "../composition-api/useMsal";
 import { msalInstance } from "../authConfig";
+import { watch } from "vue";
 
 interface App {
   app_id: string;
@@ -104,14 +110,14 @@ export default defineComponent({
     let isAdmin = false as boolean;
 
     const { accounts } = useMsal();
-    if(accounts.value.length > 0) {
-            const user = msalInstance.getActiveAccount();
-            if (user && user.idTokenClaims && user.idTokenClaims.roles) {
-              // console.log("chat.admin->", user.idTokenClaims.roles?.includes("chat.admin"));
-              isAdmin = user.idTokenClaims.roles?.includes("chat.admin");
-            }
+    if (accounts.value.length > 0) {
+      const user = msalInstance.getActiveAccount();
+      if (user && user.idTokenClaims && user.idTokenClaims.roles) {
+        // console.log("chat.admin->", user.idTokenClaims.roles?.includes("chat.admin"));
+        isAdmin = user.idTokenClaims.roles?.includes("chat.admin");
+      }
     }
-    // console.log("isAdmin->", isAdmin);
+    console.log("isAdmin->", isAdmin);
     return { isAuthenticated, isAdmin };
   },
 
@@ -120,13 +126,29 @@ export default defineComponent({
       apps: [] as App[],
       expandedRows: {} as Record<number, boolean>,
       errorMsg: "" as string,
+      tk: "" as string,
       // isAuthenticated: isAuthenticated,
     };
   },
   mounted() {
-    this.getAppList();
+    if (this.isAdmin) {
+      const { result } = useMsalAuthentication(InteractionType.Redirect, loginRequest);
+
+      watch(result, () => {
+        // Fetch new data from the API each time the result changes (i.e. a new access token was acquired)
+        if (result && result.value) {
+          this.tk = result.value.accessToken;
+          console.log("tk->", this.tk);
+          axios.defaults.headers.common["Authorization"] = "Bearer " + this.tk;
+          this.getAppList();
+        }
+
+      });
+
+    }
+
   },
-  
+
   methods: {
     getRowBackgroundColor(index: number) {
       return index % 2 === 0
@@ -140,12 +162,12 @@ export default defineComponent({
       var that = this;
       try {
         const resp = await axios.get("/api/gptapps/list");
-        axios.defaults.headers.common["Authorization"] =
-          "Bearer " + resp.data.accessToken;
+        // axios.defaults.headers.common["Authorization"] =
+        //   "Bearer " + resp.data.accessToken;
         this.apps = resp.data;
       } catch (error) {
         console.error("Failed to fetch app list:", error);
-        if(error){
+        if (error) {
           that.errorMsg = error.toString();
         }
       }

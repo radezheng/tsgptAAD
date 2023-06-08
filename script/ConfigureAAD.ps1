@@ -222,10 +222,10 @@ Function ConfigureApplications
     # Connect to the Microsoft Graph API, non-interactive is not supported for the moment (Oct 2021)
     Write-Host "Connecting to Microsoft Graph"
     if ($tenantId -eq "") {
-        Connect-MgGraph -Scopes "User.Read.All Organization.Read.All Application.ReadWrite.All" -Environment $azureEnvironmentName
+        Connect-MgGraph -Scopes "User.Read.All Organization.Read.All Application.ReadWrite.All" -Environment $azureEnvironmentName -UseDeviceAuthentication
     }
     else {
-        Connect-MgGraph -TenantId $tenantId -Scopes "User.Read.All Organization.Read.All Application.ReadWrite.All" -Environment $azureEnvironmentName
+        Connect-MgGraph -TenantId $tenantId -Scopes "User.Read.All Organization.Read.All Application.ReadWrite.All" -Environment $azureEnvironmentName -UseDeviceAuthentication
     }
     
     $context = Get-MgContext
@@ -233,6 +233,7 @@ Function ConfigureApplications
 
     # Get the user running the script
     $currentUserPrincipalName = $context.Account
+    Write-Host "Current user is $currentUserPrincipalName"
     $user = Get-MgUser -Filter "UserPrincipalName eq '$($context.Account)'"
 
     # get the tenant we signed in to
@@ -244,12 +245,12 @@ Function ConfigureApplications
     $tenantId = $Tenant.Id
 
     $backendAppId = "backendapi"
-    $chatAppId = "chatapp1"
+    $chatAppId = "chatapp35"
 
     Write-Host ("Connected to Tenant {0} ({1}) as account '{2}'. Domain is '{3}'" -f  $Tenant.DisplayName, $Tenant.Id, $currentUserPrincipalName, $verifiedDomainName)
 
    # Create the service AAD application
-   Write-Host "Creating the AAD application ({0})" -f $backendAppId
+   Write-Host ("Creating the AAD application ({0})" -f $backendAppId)
    # create the application 
    $serviceAadApplication = New-MgApplication -DisplayName $backendAppId `
                                                        -Web `
@@ -296,9 +297,9 @@ Function ConfigureApplications
     
     # Publish Application Permissions
     $appRoles = New-Object System.Collections.Generic.List[Microsoft.Graph.PowerShell.Models.MicrosoftGraphAppRole]
-    $newRole = CreateAppRole -types "Application" -name "Todolist.Read.All" -description "e.g. Allows the app to read the signed-in user's files."
+    $newRole = CreateAppRole -types "Application" -name "chat.Read.All" -description "e.g. Allows the app to read the signed-in user's files."
     $appRoles.Add($newRole)
-    $newRole = CreateAppRole -types "Application" -name "Todolist.ReadWrite.All" -description "e.g. Allows the app to read the signed-in user's files."
+    $newRole = CreateAppRole -types "Application" -name "chat.ReadWrite.All" -description "e.g. Allows the app to read the signed-in user's files."
     $appRoles.Add($newRole)
     Update-MgApplication -ApplicationId $currentAppObjectId -AppRoles $appRoles
     
@@ -320,19 +321,19 @@ Function ConfigureApplications
     }
 
     $scopes = New-Object System.Collections.Generic.List[Microsoft.Graph.PowerShell.Models.MicrosoftGraphPermissionScope]
-    $scope = CreateScope -value Todolist.Read  `
-        -userConsentDisplayName "Todolist.Read"  `
+    $scope = CreateScope -value chat.Read  `
+        -userConsentDisplayName "chat.Read"  `
         -userConsentDescription "eg. Allows the app to read your files."  `
-        -adminConsentDisplayName "Todolist.Read"  `
+        -adminConsentDisplayName "chat.Read"  `
         -adminConsentDescription "e.g. Allows the app to read the signed-in user's files." `
         -consentType "User" `
         
             
     $scopes.Add($scope)
-    $scope = CreateScope -value Todolist.ReadWrite  `
-        -userConsentDisplayName "Todolist.ReadWrite"  `
+    $scope = CreateScope -value chat.ReadWrite  `
+        -userConsentDisplayName "chat.ReadWrite"  `
         -userConsentDescription "eg. Allows the app to read your files."  `
-        -adminConsentDisplayName "Todolist.ReadWrite"  `
+        -adminConsentDisplayName "chat.ReadWrite"  `
         -adminConsentDescription "e.g. Allows the app to read the signed-in user's files." `
         -consentType "User" `
         
@@ -341,7 +342,7 @@ Function ConfigureApplications
     
     # add/update scopes
     Update-MgApplication -ApplicationId $currentAppObjectId -Api @{Oauth2PermissionScopes = @($scopes)}
-    Write-Host "Done creating the service application ({0})" -f $backendAppId
+    Write-Host ("Done creating the service application ({0})" -f $backendAppId)
 
     # URL of the AAD application in the Azure portal
     # Future? $servicePortalUrl = "https://portal.azure.com/#@"+$tenantName+"/blade/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/Overview/appId/"+$currentAppId+"/objectId/"+$currentAppObjectId+"/isMSAApp/"
@@ -352,9 +353,9 @@ Function ConfigureApplications
     # print the registered app portal URL for any further navigation
     Write-Host "Successfully registered and configured that app registration for '$backendAppId' at `n $servicePortalUrl" -ForegroundColor Green 
    # Create the client AAD application
-   Write-Host "Creating the AAD application (msal-react-spa)"
+   Write-Host ("Creating the AAD application ({0})" -f $chatAppId)
    # create the application 
-   $clientAadApplication = New-MgApplication -DisplayName "msal-react-spa" `
+   $clientAadApplication = New-MgApplication -DisplayName $chatAppId `
                                                       -Spa `
                                                       @{ `
                                                           RedirectUris = "http://localhost:3000", "http://localhost:3000/redirect"; `
@@ -366,7 +367,7 @@ Function ConfigureApplications
     $currentAppObjectId = $clientAadApplication.Id
 
     $tenantName = (Get-MgApplication -ApplicationId $currentAppObjectId).PublisherDomain
-    #Update-MgApplication -ApplicationId $currentAppObjectId -IdentifierUris @("https://$tenantName/msal-react-spa")
+    #Update-MgApplication -ApplicationId $currentAppObjectId -IdentifierUris @("https://$tenantName/$chatAppId")
     
     # create the service principal of the newly created application     
     $clientServicePrincipal = New-MgServicePrincipal -AppId $currentAppId -Tags {WindowsAzureActiveDirectoryIntegratedApp}
@@ -378,20 +379,20 @@ Function ConfigureApplications
         New-MgApplicationOwnerByRef -ApplicationId $currentAppObjectId  -BodyParameter @{"@odata.id" = "https://graph.microsoft.com/v1.0/directoryObjects/$user.ObjectId"}
         Write-Host "'$($user.UserPrincipalName)' added as an application owner to app '$($clientServicePrincipal.DisplayName)'"
     }
-    Write-Host "Done creating the client application (msal-react-spa)"
+    Write-Host ("Done creating the client application ({0})" -f $chatAppId)
 
     # URL of the AAD application in the Azure portal
     # Future? $clientPortalUrl = "https://portal.azure.com/#@"+$tenantName+"/blade/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/Overview/appId/"+$currentAppId+"/objectId/"+$currentAppObjectId+"/isMSAApp/"
     $clientPortalUrl = "https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/"+$currentAppId+"/isMSAApp~/false"
 
-    Add-Content -Value "<tr><td>client</td><td>$currentAppId</td><td><a href='$clientPortalUrl'>msal-react-spa</a></td></tr>" -Path createdApps.html
+    Add-Content -Value "<tr><td>client</td><td>$currentAppId</td><td><a href='$clientPortalUrl'>$chatAppId</a></td></tr>" -Path createdApps.html
     # Declare a list to hold RRA items    
     $requiredResourcesAccess = New-Object System.Collections.Generic.List[Microsoft.Graph.PowerShell.Models.MicrosoftGraphRequiredResourceAccess]
 
     # Add Required Resources Access (from 'client' to 'service')
     Write-Host "Getting access from 'client' to 'service'"
     $requiredPermission = GetRequiredPermissions -applicationDisplayName $backendAppId `
-        -requiredDelegatedPermissions "Todolist.Read|Todolist.ReadWrite"
+        -requiredDelegatedPermissions "chat.Read|chat.ReadWrite"
 
     $requiredResourcesAccess.Add($requiredPermission)
     Write-Host "Added 'service' to the RRA list."
@@ -404,11 +405,11 @@ Function ConfigureApplications
     
 
     # print the registered app portal URL for any further navigation
-    Write-Host "Successfully registered and configured that app registration for 'msal-react-spa' at `n $clientPortalUrl" -ForegroundColor Green 
+    Write-Host "Successfully registered and configured that app registration for $chatAppId at `n $clientPortalUrl" -ForegroundColor Green 
     
     # Update config file for 'service'
     # $configFile = $pwd.Path + "\..\API\authConfig.js"
-    $configFile = $(Resolve-Path ($pwd.Path + "\..\API\authConfig.js"))
+    $configFile = $(Resolve-Path ($pwd.Path + "\..\server\authConfig.js"))
     
     $dictionary = @{ "Enter_the_Application_Id_Here" = $serviceAadApplication.AppId;"Enter_the_Tenant_Info_Here" = $tenantId };
 
@@ -420,7 +421,7 @@ Function ConfigureApplications
     
     # Update config file for 'client'
     # $configFile = $pwd.Path + "\..\SPA\src\authConfig.js"
-    $configFile = $(Resolve-Path ($pwd.Path + "\..\SPA\src\authConfig.js"))
+    $configFile = $(Resolve-Path ($pwd.Path + "\..\src\authConfig.ts"))
     
     $dictionary = @{ "Enter_the_Application_Id_Here" = $clientAadApplication.AppId;"Enter_the_Tenant_Info_Here" = $tenantId;"Enter_the_Web_Api_Application_Id_Here" = $serviceAadApplication.AppId };
 

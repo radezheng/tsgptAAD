@@ -18,7 +18,8 @@
       </div>
       <div class="form-row">
         <label for="temperature">Temperature:</label>
-        <input type="range" id="temperature" v-model="appData.temperature" min="0" max="1" step="0.01" required /> {{appData.temperature}}
+        <input type="range" id="temperature" v-model="appData.temperature" min="0" max="1" step="0.01" required />
+        {{ appData.temperature }}
       </div>
       <div class="form-row">
         <label for="max_tokens">Max Tokens:</label>
@@ -28,59 +29,83 @@
         <label for="top_p">Top P:</label>
         <input type="number" id="top_p" v-model="appData.top_p" required />
       </div>
-      
+
       <div class="form-row">
         <label for="welcome">Welcome:</label>
         <textarea id="welcome" v-model="appData.welcome" required></textarea>
       </div>
       <div class="centered" width="100%">
-      <button type="submit" >Submit</button>
-    </div>
+        <button type="submit">Submit</button>
+      </div>
     </form>
   </div>
 </template>
   
-  <script lang="ts">
-  import axios from 'axios';
-  import { useRoute } from 'vue-router'
-  
-  export default {
+<script lang="ts">
+import axios from 'axios';
+import { useRoute } from 'vue-router';
+import { watch } from "vue";
+import { useMsalAuthentication } from "../composition-api/useMsalAuthentication";
+import { InteractionType } from "@azure/msal-browser";
+import { loginRequest } from "../authConfig";
 
-    data() {
-      return {
-        loading: false as boolean,
-        appData: {
-          name: '',
-          description: '测试用，可以对比不同的参数以及dataground的效果。',
-          dataground: 'You are a helpful assistant.',
-          temperature: '0.5',
-          max_tokens: '1000',
-          top_p: '1',
-          // title: "欢迎使用Azure OpenAI ChatGPT",
-          welcome: '您好, 您正在与Azure OpenAI聊天，如果想保留聊天内容，可以按Ctrl + S来保存哦。',
-        },
-      };
-    },
 
-    mounted() {
-      if (this.$route.params.appName) {
-        
-        this.fetchAppData();
-      }
-      
-    },
+export default {
 
-    methods: {
-      goBack() {
+  data() {
+    return {
+      loading: false as boolean,
+      appData: {
+        name: '',
+        description: '测试用，可以对比不同的参数以及dataground的效果。',
+        dataground: 'You are a helpful assistant.',
+        temperature: '0.5',
+        max_tokens: '1000',
+        top_p: '1',
+        welcome: '您好, 您正在与Azure OpenAI聊天，如果想保留聊天内容，可以按Ctrl + S来保存哦。',
+
+      },
+      tk: "",
+    };
+  },
+
+  mounted() {
+    if (this.$route.params.appName) {
+
+      const { result } = useMsalAuthentication(InteractionType.Redirect, loginRequest);
+
+      watch(result, () => {
+        // Fetch new data from the API each time the result changes (i.e. a new access token was acquired)
+        if (result && result.value) {
+          this.tk = result.value.accessToken;
+          axios.defaults.headers.common['Authorization'] = 'Bearer ' + this.tk;
+          this.fetchAppData();
+        }
+
+      });
+
+
+    }
+
+  },
+
+  methods: {
+    goBack() {
       this.$router.go(-1);
     },
 
     async fetchAppData() {
       const route = useRoute();
-      const appName = route.params.appName; 
+      const appName = route.params.appName;
       try {
         this.loading = true;
-        const response = await fetch(`/api/gptapps/${appName}`);
+        const response = await fetch(`/api/gptapps/${appName}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + this.tk,
+          }
+        });
         const data = await response.json();
 
         if (data && data.length > 0) {
@@ -94,22 +119,23 @@
       }
     },
 
-      async addApp() {
-        try {
-          const response = await axios.post('/api/gptapps/add', this.appData);
-          if (response.status === 201) {
-            alert('App added successfully');
-            this.goBack();
-            
-          }
-        } catch (error) {
-          console.error(error);
-          alert('Error adding app');
+    async addApp() {
+      try {
+
+        const response = await axios.post('/api/gptapps/add', this.appData);
+        if (response.status === 201) {
+          alert('App added successfully');
+          this.goBack();
+
         }
-      },
+      } catch (error) {
+        console.error(error);
+        alert('Error adding app');
+      }
     },
-  };
-  </script>
+  },
+};
+</script>
 
 <style>
 .centered {
@@ -135,6 +161,7 @@
 .back-button:hover {
   background-color: #e0e0e0;
 }
+
 .form-table {
   display: table;
   width: 100%;
@@ -173,5 +200,4 @@ textarea {
 button[type="submit"] {
   display: block;
   /* margin: 10px auto; */
-}
-</style>  
+}</style>  

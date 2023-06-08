@@ -8,70 +8,10 @@ import dotenv from 'dotenv';
 import passport from 'passport';
 import { BearerStrategy } from 'passport-azure-ad';
 import { authConfig } from './authConfig.js';
-import jwt from 'jsonwebtoken';
-import jwksClient from 'jwks-rsa';
+import cors from "cors";
 
 dotenv.config();
 
-
-const client = jwksClient({
-  timeout: 60000,
-  jwksUri: `https://login.microsoftonline.com/${process.env.AAD_TENANT_ID}/discovery/v2.0/keys`
-});
-
-function getSigningKey(header, callback) {
-  console.log(client, header);
-  client.getSigningKey(header.kid, (err, key) => {
-    if (err) {
-      console.log("err->", err);
-      console.log("key->", key);
-      callback(err);
-    } else {
-      const signingKey = key.publicKey || key.rsaPublicKey;
-      console.log("signingKey->", signingKey);
-      callback(null, signingKey);
-    }
-  });
-}
-
-async function validateAccessToken(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).send('Authorization header is missing');
-  }
-
-  const token = authHeader.split(' ')[1];
-  console.log("token->", token);
-  jwt.verify(token, getSigningKey, {
-    // audience: process.env.AAD_ID_SCOPE,
-    // issuer: `https://sts.windows.net/${process.env.AAD_TENANT_ID}/`,
-    algorithms: ['RS256']
-  }, (err, decoded) => {
-    console.log("decoded->", decoded);
-    if (err) {
-      console.error(err);
-      return res.status(401).send({"message":"Invalid access token", "error": err});
-    }
-
-    req.user = decoded;
-    next();
-  });
-}
-
-
-
-const options = {
-  identityMetadata: `https://login.microsoftonline.com/${process.env.AAD_TENANT_ID}/v2.0/.well-known/openid-configuration`,
-  clientID: process.env.AAD_CLIENT_ID,
-  audience: process.env.AAD_CLIENT_ID,
-  loggingLevel: 'info',
-  passReqToCallback: false,
-};
-
-// const bearerStrategy = new BearerStrategy(options, (token, done) => {
-//   // Send the user info (token) to the next middleware
-//   done(null, token, null);
-// });
 
 const bearerStrategy = new BearerStrategy({
   identityMetadata: `https://${authConfig.metadata.authority}/${authConfig.credentials.tenantID}/${authConfig.metadata.version}/${authConfig.metadata.discovery}`,
@@ -90,7 +30,7 @@ const bearerStrategy = new BearerStrategy({
   // if (!token.hasOwnProperty('scp') && !token.hasOwnProperty('roles')) {
   //     return done(new Error('Unauthorized'), null, "No delegated or app permission claims found");
   // }
-  console.log("token->", token);
+  // console.log("token->", token);
   /**
    * If needed, pass down additional user info to route using the second argument below.
    * This information will be available in the req.user object.
@@ -108,6 +48,7 @@ const port = process.env.NODE_PORT || 3000;
 
 app.use(passport.initialize());
 passport.use(bearerStrategy);
+app.use(cors());
 
 const config = {
   user: process.env.DB_USER,
@@ -128,7 +69,9 @@ const apiKey = process.env.VUE_APP_APIM_KEY;
 
 let msgid = 0;
 // List apps
-app.get("/api/gptapps/list", async (req, res) => {
+app.get("/api/gptapps/list", passport.authenticate('oauth-bearer', {
+  session: false,
+}), async (req, res) => {
   try {
     await sql.connect(config);
     const result = await sql.query`SELECT * FROM tblGPTApps`;
@@ -140,7 +83,9 @@ app.get("/api/gptapps/list", async (req, res) => {
 });
 
 // Add a new app
-app.post("/api/gptapps/add", async (req, res) => {
+app.post("/api/gptapps/add", passport.authenticate('oauth-bearer', {
+  session: false,
+}), async (req, res) => {
   const { name, description, dataground, temperature, max_tokens, top_p, welcome } = req.body;
 
   try {
@@ -166,13 +111,15 @@ app.get("/api/gptapps/:appName", passport.authenticate('oauth-bearer', {
     }
   } catch (err) {
     console.error(err);
-    res.status(500).send({"message": "Error fetching app, pls check your public IP in sql server firewall", "error": err});
+    res.status(500).send({ "message": "Error fetching app, pls check your public IP in sql server firewall", "error": err });
   }
 });
 
 
 // Delete an app
-app.delete("/api/gptapps/delete/:id", async (req, res) => {
+app.delete("/api/gptapps/delete/:id", passport.authenticate('oauth-bearer', {
+  session: false,
+}), async (req, res) => {
   const appId = req.params.id;
 
   try {
@@ -185,7 +132,9 @@ app.delete("/api/gptapps/delete/:id", async (req, res) => {
   }
 });
 
-app.post("/api/chat/completions", async (req, res) => {
+app.post("/api/chat/completions", passport.authenticate('oauth-bearer', {
+  session: false,
+}), async (req, res) => {
   try {
     const response = await axios.post(apiUrl, req.body, {
       headers: {
@@ -201,7 +150,9 @@ app.post("/api/chat/completions", async (req, res) => {
   }
 });
 
-app.post("/api/chat/completions/stream", validateAccessToken, (req, res) => {
+app.post("/api/chat/completions/stream", passport.authenticate('oauth-bearer', {
+  session: false,
+}), (req, res) => {
   // console.log("req->", req.body);
   const requestBody = JSON.stringify(req.body);
   const proxyReq = https.request(

@@ -12,16 +12,22 @@ const accounts = msalInstance.getAllAccounts();
 if (accounts.length > 0) {
     msalInstance.setActiveAccount(accounts[0]);
 }
+let gtk = "";
 msalInstance.addEventCallback((event) => {
   if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
     const payload = event.payload as AuthenticationResult;
     const account = payload.account;
+    gtk = payload.accessToken;
+    console.log("gtk: " + gtk)
     msalInstance.setActiveAccount(account);
   }
 });
 
+
 const app = createApp(App);
 
+app.config.globalProperties.$gtk = gtk;
+console.log("gtk: " + gtk)
 
 app.use(ElementPlus);
 app.use(router);

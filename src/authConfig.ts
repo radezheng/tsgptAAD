@@ -55,7 +55,7 @@ export const protectedResources = {
 
 // Add here scopes for id token to be used at MS Identity Platform endpoints.
 export const loginRequest = {
-  scopes: ['User.Read', 'openid', 'profile', ...protectedResources.apiChat.scopes.read, ...protectedResources.apiChat.scopes.write],
+  scopes: [...protectedResources.apiChat.scopes.read, ...protectedResources.apiChat.scopes.write],
 };
 
 // Add here the endpoints for MS Graph API services you would like to use.

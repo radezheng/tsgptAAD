@@ -1,5 +1,5 @@
 
-# 这是一个Azure OpenAI 的客户端
+# 这是一个支持AAD认证的Azure OpenAI 的客户端
 当您拿到Azure OpenAI的订阅时，创建完服务，可以使用这个项目来部署第一个应用，分享给同事或朋友一起探索。<br/>
 
 
@@ -8,7 +8,7 @@
 - 聊天记录不会在后端保存，但可以使用APIM的日志管理和审计特性来管理。
 - 支持 GPT-3.5和 GPT-4 的流式API显示
 - 支持定义多种参数的多个聊天app, 不同的app不同的url, 可以分发给不同的人。也方便对比不同参数的效果。
-- 这个repo没有整合 AAD 认证和登录，需要的参考tsgptAAD
+- 这个repo整合 AAD 认证和登录，不需要的参考 [tsgpt](https://github.com/radezheng/tsgpt)
 - 可以通过APIM的Policy实现多AOAI 后端的负载均衡，提高rate limit. 部署完后，参考后面负载均衡的部份。
 
 部署的架构参考:
@@ -22,15 +22,21 @@ App列表：
 
 ## 部署步骤
 ### 创建Azure资源
+- 下载安装PowerShell 7 (脚本需要verion 7+),  https://github.com/PowerShell/PowerShell/releases/download/v7.3.4/PowerShell-7.3.4-win-x64.msi
+
 - 下载安装sqlcmd, 用于初始化数据库。***安装完请重新打开PowerShell命令窗口***  https://learn.microsoft.com/zh-cn/sql/tools/sqlcmd/sqlcmd-utility?view=sql-server-ver16
 
 - 获取Azure OpenAI的部署，模型ID和Key
 
-- 打开[./script/deploy.ps1](./script/deploy.ps1), 按提示修改如下变量:
+- 打开文件[./script/createAll.ps1](./script/createAll.ps1), 按提示修改如下变量:
 
 ```bash
 $RESOURCE_GROUP_NAME="rgOpenAIChat"
 $LOCATION="eastasia"
+
+#for AAD
+$Tenant_Id = "<your tenant id>"
+
 #for DB
 #需全球唯一
 $SQL_SERVER_NAME="<your unique sql server name>"
@@ -55,13 +61,18 @@ $VUE_APP_APIM_HOST=$SVC_NAME + ".azure-api.net"
 $VUE_APP_APIM_KEY="xxx"
 #需全球唯一, 可改为自己容易记的名字。bot访问的地址为 https://<your app name>.azurewebsites.net
 $APP_NAME="chat$(Get-Date -Format 'MMddHHmmss')"
-#这个镜像是我自己的，可以不改。如果你修后后有自己的镜像，可以改为自己的镜像地址
-$DOCKER_IMAGE="radezheng/tsgpt:basic"
+#需全球唯一
+$ACR_NAME="<your acr name>"
+#改为自己的镜像地址, 会包含你定义的AAD tenant信息
+$DOCKER_IMAGE="$ACR_NAME.azurecr.io/<change to your own image, e.g. tsgptAAD:basic>"
 
 ```
 
-- 打开powershell, 运行 script\deploy.ps1 , 等运行完。创建APIM需要大概20分钟到半小时。收到邮件后再继续下面部步骤.
+- 打开powershell, , 运行 script\deploy.ps1 , 等运行完。创建APIM需要大概20分钟到半小时。收到邮件后再继续下面部步骤.
 ```powershell
+#确认版本 Major 是 7
+$PSVersionTable.PSVersion
+
 #需要在script目录下运行
 cd script
 .\deploy.ps1

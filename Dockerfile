@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y curl xz-utils
 RUN curl -sL https://nodejs.org/dist/v18.9.1/node-v18.9.1-linux-x64.tar.xz | tar -xJ -C /usr/local --strip-components=1
 
 RUN apt-get install -y npm
-RUN cd /app/server && npm init -y && npm install express axios mssql dotenv
+RUN cd /app/server && npm init -y && npm install express axios mssql dotenv passport passport-azure-ad cors
 # Expose the ports that the application will run on
 EXPOSE 80 3000
 

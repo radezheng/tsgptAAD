@@ -3,7 +3,7 @@ import { msalInstance, loginRequest } from "../authConfig";
 import { InteractionType, PopupRequest, PublicClientApplication, RedirectRequest } from "@azure/msal-browser";
 
 export function registerGuard(router: Router) {
-    router.beforeEach(async (to: RouteLocationNormalized, from: RouteLocationNormalized) => {
+    router.beforeEach(async (to: RouteLocationNormalized) => {
         if (to.meta.requiresAuth) {
             const request = {
                 ...loginRequest,

@@ -233,6 +233,7 @@ Function ConfigureApplications
 
     # Get the user running the script
     $currentUserPrincipalName = $context.Account
+ 
     Write-Host "Current user is $currentUserPrincipalName"
     $user = Get-MgUser -Filter "UserPrincipalName eq '$($context.Account)'"
 
@@ -251,6 +252,12 @@ Function ConfigureApplications
 
    # Create the service AAD application
    Write-Host ("Creating the AAD application ({0})" -f $backendAppId)
+   $app = Get-AzureADApplication -Filter "DisplayName eq '$backendAppId'"
+   if($app){
+    Write-Host ("Application ({0}) already exists. Removing it" -f $backendAppId)
+    Remove-AzureADApplication -ObjectId $app.ObjectId
+   }
+
    # create the application 
    $serviceAadApplication = New-MgApplication -DisplayName $backendAppId `
                                                        -Web `
@@ -354,6 +361,13 @@ Function ConfigureApplications
     Write-Host "Successfully registered and configured that app registration for '$backendAppId' at `n $servicePortalUrl" -ForegroundColor Green 
    # Create the client AAD application
    Write-Host ("Creating the AAD application ({0})" -f $chatAppId)
+
+   $app = Get-AzureADApplication -Filter "DisplayName eq '$chatAppId'"
+if($app){
+    Write-Host ("Application ({0}) already exists. Removing it" -f $chatAppId)
+Remove-AzureADApplication -ObjectId $app.ObjectId
+}
+
    # create the application 
    $clientAadApplication = New-MgApplication -DisplayName $chatAppId `
                                                       -Spa `
@@ -381,6 +395,53 @@ Function ConfigureApplications
     }
     Write-Host ("Done creating the client application ({0})" -f $chatAppId)
 
+
+    Write-Host "Create Admin Role and assign to current user:"
+
+    if(!(Get-Module -ListAvailable -Name AzureAD))
+    {
+        Install-Module -Name AzureAD -Force
+    }
+
+    Import-Module AzureAD -UseWindowsPowerShell
+
+$app = Get-AzureADApplication -Filter "DisplayName eq '$chatAppId'"
+while(!$app){
+    
+ Write-Host "can't get app: $chatAppId, retrying..."
+ #sleep 1 second
+ Start-Sleep -s 1
+ $app = Get-AzureADApplication -Filter "DisplayName eq '$chatAppId'"
+}
+Connect-AzureAD -TenantId $tenantId -AccountId $currentUserPrincipalName
+$adminRole = New-Object Microsoft.Open.AzureAD.Model.AppRole
+$allowedMemberTypesList = New-Object System.Collections.Generic.List[string]($adminRole.AllowedMemberTypes)
+$allowedMemberTypesList.Add("User")
+$adminRole.AllowedMemberTypes = $allowedMemberTypesList
+$adminRole.DisplayName = "ChatAdmin"
+$adminRole.Id = New-Guid
+$adminRole.IsEnabled = $true
+$adminRole.Value = "chat.admin"
+$adminRole.Description = "chat admin"
+
+# $app.AppRoles.Add($adminRole)
+Set-AzureADApplication -ObjectId $app.ObjectId -AppRoles $adminRole
+
+
+$upn = $currentUserPrincipalName -replace "@", "_"
+Write-Host "UserPrincipalName: $currentUserPrincipalName"
+$theUser = Get-AzureADUser | Where-Object {$_.UserPrincipalName.StartsWith($upn)}
+$UserObjectId = $theUser.ObjectId
+Write-Host "UserObjectId: $UserObjectId"
+$aid = $app.AppId
+$servicePrincipal = Get-AzureADServicePrincipal -Filter "appId eq '$aid'"
+Write-Host "servicePrincipal"
+$servicePrincipal
+New-AzureADUserAppRoleAssignment  -Id $adminRole.Id -ResourceId  $servicePrincipal.ObjectId  -ObjectId $UserObjectId -PrincipalId $UserObjectId
+     
+
+
+
     # URL of the AAD application in the Azure portal
     # Future? $clientPortalUrl = "https://portal.azure.com/#@"+$tenantName+"/blade/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/Overview/appId/"+$currentAppId+"/objectId/"+$currentAppObjectId+"/isMSAApp/"
     $clientPortalUrl = "https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/"+$currentAppId+"/isMSAApp~/false"
@@ -407,6 +468,9 @@ Function ConfigureApplications
     # print the registered app portal URL for any further navigation
     Write-Host "Successfully registered and configured that app registration for $chatAppId at `n $clientPortalUrl" -ForegroundColor Green 
     
+    # revert config file
+    Copy-Item -Path $(Resolve-Path ($pwd.Path + "\..\server\authConfig_org.js")) -Destination $(Resolve-Path ($pwd.Path + "\..\server\authConfig.js")) -Force
+
     # Update config file for 'service'
     # $configFile = $pwd.Path + "\..\API\authConfig.js"
     $configFile = $(Resolve-Path ($pwd.Path + "\..\server\authConfig.js"))
@@ -419,6 +483,9 @@ Function ConfigureApplications
 
     ReplaceInTextFile -configFilePath $configFile -dictionary $dictionary
     
+    #revert config file
+    Copy-Item -Path $(Resolve-Path ($pwd.Path + "\..\src\authConfig_org.ts")) -Destination $(Resolve-Path ($pwd.Path + "\..\src\authConfig.ts")) -Force
+
     # Update config file for 'client'
     # $configFile = $pwd.Path + "\..\SPA\src\authConfig.js"
     $configFile = $(Resolve-Path ($pwd.Path + "\..\src\authConfig.ts"))

@@ -1,0 +1,64 @@
+<mxfile host="65bd71144e">
+    <diagram id="WtRFDUaSbyghpBXP5Zu4" name="Page-1">
+        <mxGraphModel dx="1157" dy="784" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="26" value="" style="rounded=0;whiteSpace=wrap;html=1;labelBackgroundColor=#FFFFFF;strokeColor=#007FFF;fontColor=#000000;fillColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="10" y="107.5" width="820" height="492.5" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#007FFF;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="220" y="160" width="550" height="380" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" style="edgeStyle=none;html=1;strokeColor=#004C99;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" source="4" target="5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="VueJS" style="aspect=fixed;html=1;points=[];align=center;image;fontSize=12;image=img/lib/azure2/general/Browser.svg;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="328" width="65" height="52" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" style="edgeStyle=none;html=1;fontColor=#000000;labelBackgroundColor=#FFFFFF;strokeColor=#004C99;" parent="1" source="5" target="6" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;strokeColor=#004C99;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" source="5" target="17" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="Web App" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;fontSize=12;image=img/lib/mscae/App_Services.svg;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="327" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" style="edgeStyle=none;html=1;strokeColor=#004C99;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" source="6" target="9" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" style="edgeStyle=none;html=1;strokeColor=#004C99;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" source="6" target="10" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" style="edgeStyle=none;html=1;strokeColor=#004C99;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" source="6" target="7" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" style="edgeStyle=none;html=1;strokeColor=#004C99;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" source="6" target="8" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="API 管理平台" style="aspect=fixed;html=1;points=[];align=center;image;fontSize=12;image=img/lib/azure2/app_services/API_Management_Services.svg;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="425" y="322" width="65" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="Azure OpenAI 实例1" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;fontSize=12;image=img/lib/mscae/Cognitive_Services.svg;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="630" y="300" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="Azure OpenAI 实例2" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;fontSize=12;image=img/lib/mscae/Cognitive_Services.svg;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="630" y="372" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="监控" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;fontSize=12;image=img/lib/mscae/Monitor.svg;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="433" y="460" width="40" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="密钥" style="aspect=fixed;html=1;points=[];align=center;image;fontSize=12;image=img/lib/azure2/security/Key_Vaults.svg;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="460" width="42" height="42" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="" style="verticalLabelPosition=bottom;html=1;verticalAlign=top;align=center;strokeColor=none;fillColor=#00BEF2;shape=mxgraph.azure.sql_database_sql_azure;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="370" y="230" width="47.5" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="22" value="Azure" style="verticalLabelPosition=bottom;html=1;verticalAlign=top;align=center;strokeColor=none;fillColor=#00BEF2;shape=mxgraph.azure.cloud;fontColor=#000000;labelBackgroundColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="690" y="167.5" width="50" height="32.5" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

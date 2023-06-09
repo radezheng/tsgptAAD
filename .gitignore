@@ -38,3 +38,4 @@ test.sh
 src/authConfig.ts
 server/authConfig.js
 
+script/createdApps.html

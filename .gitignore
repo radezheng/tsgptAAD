@@ -13,6 +13,7 @@ lerna-debug.log*
 */authConfig.ts
 
 node_modules
+./server/node_modules
 dist
 dist-ssr
 *test*
@@ -39,3 +40,4 @@ src/authConfig.ts
 server/authConfig.js
 
 script/createdApps.html
+

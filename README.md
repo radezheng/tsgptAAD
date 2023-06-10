@@ -13,20 +13,30 @@
 
 部署的架构参考:
 ![arch](./images/EnterpriseAOAI-Architecture.png)
-添加App时指定参数：
-![addgpt](./images/addgpt.png)
+
+首页需要AAD 登录:<br/>
+![login](./images/loginpage.png)
+<br/>只有有chat.admin角色权限的用户才能对chat app修改，默认租户管理员已配好权限。一般用户只能使用定义好的chat app的url进行聊天，需要在AAD的管理界面添加权限。
+![home](./images/chatadmin.png)
+
 App列表：
 ![Applist](./images/applist.png)
+
+添加App时指定参数：
+![addgpt](./images/addgpt.png)
+
 聊天界面：
 ![chatgpt](./images/chatgpt.png)
 
 ## 部署步骤
 ### 创建Azure资源
-- 下载安装PowerShell 7 (脚本需要verion 7+),  https://github.com/PowerShell/PowerShell/releases/download/v7.3.4/PowerShell-7.3.4-win-x64.msi
+- 下载安装PowerShell 7 (脚本需要verion 7+), [点这里下载 Win64版](https://github.com/PowerShell/PowerShell/releases/download/v7.3.4/PowerShell-7.3.4-win-x64.msi)。其他参考 [PowerShell 7 安装指南](https://docs.microsoft.com/zh-cn/powershell/scripting/install/installing-powershell?view=powershell-7.1)
 
-- 下载安装sqlcmd, 用于初始化数据库。***安装完请重新打开PowerShell命令窗口***  https://learn.microsoft.com/zh-cn/sql/tools/sqlcmd/sqlcmd-utility?view=sql-server-ver16
+- 下载安装sqlcmd, 用于初始化数据库。***安装完请重新打开PowerShell命令窗口*** [下载安装参考](https://learn.microsoft.com/zh-cn/sql/tools/sqlcmd/sqlcmd-utility?view=sql-server-ver16)
 
 - 获取Azure OpenAI的部署，模型ID和Key
+
+- 准备docker的运行环境。如果没有docker环境，可以参考[这里](https://docs.docker.com/get-docker/)安装docker。如果已经有docker环境，可以跳过这步。
 
 - 打开文件[./script/createAll.ps1](./script/createAll.ps1), 按提示修改如下变量:
 
@@ -67,15 +77,38 @@ $ACR_NAME="<your acr name>"
 $DOCKER_IMAGE="$ACR_NAME.azurecr.io/<change to your own image, e.g. tsgptAAD:basic>"
 
 ```
+- Tenant ID 可以在Azure Portal里找到，也可以用下面的命令查看
+```powershell
+Connect-AzAccount
+Get-AzTenant
+#复制返回的Id 字段
+```
+或者在Portal里查找:
+![tenantid](./images/TenantId.png)
 
-- 打开powershell, , 运行 script\deploy.ps1 , 等运行完。创建APIM需要大概20分钟到半小时。收到邮件后再继续下面部步骤.
+### 开始部署
+- 打开powershell, , 按下面代码运行脚本进行自动化部署
 ```powershell
 #确认版本 Major 是 7
 $PSVersionTable.PSVersion
 
 #需要在script目录下运行
 cd script
-.\deploy.ps1
+.\createAll.ps1
+```
+- 按提示输入密码(DB)和Azure OpenAI的key
+- 需要用AAD租户管理员登录一下指定的租户。<br/>
+
+![aadlogin1](./images/aadlogin1.png)
+![aadlogin2](./images/aadlogin2.png)
+<br/>然后等运行完。
+- 脚本跑完之后会打出web app URL:
+![webappurl](./images/deploy_finished.png)
+<br/>
+之后的报错是正常的，因为APIM还在后台的Job中创建，会隔30秒检查一下其状态。等APIM创建完成后，再继续下面的步骤。
+- 可以用powershell 查看后台Job的输出:
+```powershell
+Get-Job | Sort-Object -Property PSBeginTime -Descending | Select-Object -First 1 | Receive-Job
 ```
 
 ## 配置Azure资源
@@ -117,8 +150,22 @@ https://<depoyment_id>.openai.azure.com/openai/deployments/<model_id>
 ## 如果本地开发调试
 - 按前面部署好Azure服务准备
 - 复制 env.example到 .env, 并设定相关变量值
-- 然后运行
-```bash
+- 然后运行下面脚本，还是需要配置AAD和APIM.
+```powershell
+
+#配置AAD
+cd .\script
+.\ConfigureAAD.ps1 -TenantId <your tenant id>
+
+#配置APIM
+#call create apim, may need 20 to 30 minutes
+Set-Location -Path $PWD
+$job = Start-Job -FilePath "createAPIM.ps1" -ArgumentList $RESOURCE_GROUP_NAME, $LOCATION, $SVC_NAME, $API_ID, $AOAI_DEPLOYMENT_ID, $AOAI_MODEL_ID, $AOAI_KEY, $APIM_PUBLISHER_EMAIL, $PUBLISHER, $PWD
+
+#等待APIM创建完成，需要20到30分钟
+
+cd ..
+
 npm install
 
 

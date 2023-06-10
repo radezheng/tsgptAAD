@@ -4,8 +4,8 @@ import { LogLevel, PublicClientApplication } from '@azure/msal-browser';
 
 export const msalConfig = {
   auth: {
-    clientId: 'ENTER_YOUR_CLIENT_ID_HERE',
-    authority: 'https://login.microsoftonline.com/ENTER_YOUR_TENANT_ID_HERE',
+    clientId: 'Enter_the_Application_Id_Here',
+    authority: 'https://login.microsoftonline.com/Enter_the_Tenant_Info_Here',
     redirectUri: '/', // Must be registered as a SPA redirectURI on your app registration
     postLogoutRedirectUri: '/' // Must be registered as a SPA redirectURI on your app registration
   },

@@ -22,11 +22,12 @@
 App列表：
 ![Applist](./images/applist.png)
 
+聊天界面：
+![chatgpt](./images/chatgpt.png)
+
 添加App时指定参数：
 ![addgpt](./images/addgpt.png)
 
-聊天界面：
-![chatgpt](./images/chatgpt.png)
 
 ## 部署步骤
 ### 创建Azure资源

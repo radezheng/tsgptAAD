@@ -105,7 +105,7 @@ cd script
 - 脚本跑完之后会打出web app URL:
 ![webappurl](./images/deploy_finished.png)
 <br/>
-之后的报错是正常的，因为APIM还在后台的Job中创建，会隔30秒检查一下其状态。等APIM创建完成后，再继续下面的步骤。
+之后的报错可能是正常的，因为APIM还在后台的Job中创建，会隔30秒检查一下其状态。等APIM创建完成后，再继续下面的步骤。
 - 可以用powershell 查看后台Job的输出:
 ```powershell
 Get-Job | Sort-Object -Property PSBeginTime -Descending | Select-Object -First 1 | Receive-Job
@@ -149,19 +149,14 @@ https://<depoyment_id>.openai.azure.com/openai/deployments/<model_id>
 
 ## 如果本地开发调试
 - 按前面部署好Azure服务准备
+- 修改 .\script\createForLocal.ps1 的值 。还是需要配置AAD，DB和APIM.
 - 复制 env.example到 .env, 并设定相关变量值
-- 然后运行下面脚本，还是需要配置AAD和APIM.
+- 然后运行下面脚本，
 ```powershell
 
-#配置AAD
+#配置A
 cd .\script
-.\ConfigureAAD.ps1 -TenantId <your tenant id>
-
-#配置APIM
-#call create apim, may need 20 to 30 minutes
-Set-Location -Path $PWD
-$job = Start-Job -FilePath "createAPIM.ps1" -ArgumentList $RESOURCE_GROUP_NAME, $LOCATION, $SVC_NAME, $API_ID, $AOAI_DEPLOYMENT_ID, $AOAI_MODEL_ID, $AOAI_KEY, $APIM_PUBLISHER_EMAIL, $PUBLISHER, $PWD
-
+.\createForLocal.ps1
 #等待APIM创建完成，需要20到30分钟
 
 cd ..

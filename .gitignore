@@ -17,7 +17,7 @@ node_modules
 dist
 dist-ssr
 *test*
-*local*
+*.local.*
 .DS_Store
 /dist
 test.sh

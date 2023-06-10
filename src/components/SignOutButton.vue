@@ -1,8 +1,8 @@
 <template>
         <WelcomeName /> 
         <div>
-      <button @click="logoutPopup">注销</button>
-      <!-- <button @click="logoutRedirect">Logout Redirect</button> -->
+      <!-- <button @click="logoutPopup">注销</button> -->
+      <button @click="logoutRedirect">注销</button>
     </div>
 </template>
 
@@ -12,13 +12,13 @@ import WelcomeName from './WelcomeName.vue';
     
 const { instance } = useMsal();
 
-const logoutPopup = () => {
-  instance.logoutPopup({
-    mainWindowRedirectUri: "/"
-  });
-}
-
-// const logoutRedirect = () => {
-//   instance.logoutRedirect();
+// const logoutPopup = () => {
+//   instance.logoutPopup({
+//     mainWindowRedirectUri: "/"
+//   });
 // }
+
+const logoutRedirect = () => {
+  instance.logoutRedirect();
+}
 </script>

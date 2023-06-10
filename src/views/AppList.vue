@@ -138,7 +138,7 @@ export default defineComponent({
         // Fetch new data from the API each time the result changes (i.e. a new access token was acquired)
         if (result && result.value) {
           this.tk = result.value.accessToken;
-          console.log("tk->", this.tk);
+          // console.log("tk->", this.tk);
           axios.defaults.headers.common["Authorization"] = "Bearer " + this.tk;
           this.getAppList();
         }

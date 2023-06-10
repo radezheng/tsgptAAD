@@ -1,8 +1,8 @@
 <template>
     <div>
       
-      <button type="button" class="el-button" v-on:click="loginPopup"> Login </button>
-      <!-- <button type="button" class="el-button el-button--text" v-on:click="loginRedirect">Login Redirect</button> -->
+      <!-- <button type="button" class="el-button" v-on:click="loginPopup"> Login </button> -->
+      <button type="button" class="el-button" v-on:click="loginRedirect">Login</button>
     </div>
 </template>
 
@@ -12,11 +12,11 @@ import { loginRequest } from "../authConfig";
 
 const { instance } = useMsal();
 
-const loginPopup = () => {
-  instance.loginPopup(loginRequest);
-}
-    
-// const loginRedirect = () => {
-//   instance.loginRedirect(loginRequest);
+// const loginPopup = () => {
+//   instance.loginPopup(loginRequest);
 // }
+    
+const loginRedirect = () => {
+  instance.loginRedirect(loginRequest);
+}
 </script>

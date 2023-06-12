@@ -41,3 +41,5 @@ server/authConfig.js
 
 script/createdApps.html
 
+script/invite.ps1
+script/assignAdmin.ps1

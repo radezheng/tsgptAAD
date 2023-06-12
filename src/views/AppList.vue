@@ -3,6 +3,7 @@
 
     <div v-if="!isAdmin" class="centered">
       <h2 class="centered">无权访问，请联系管理员。</h2>
+      <h3>如果刚拿到管理权限，可以尝试刷新一下。</h3>
 
     </div>
     <div v-else>

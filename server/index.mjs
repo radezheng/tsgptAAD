@@ -68,6 +68,13 @@ const apiUrl =
 const apiKey = process.env.VUE_APP_APIM_KEY;
 
 let msgid = 0;
+
+//health check
+app.get("/api/health", async(req, res)=>{
+  res.end("OK");
+  return;
+})
+
 // List apps
 app.get("/api/gptapps/list", passport.authenticate('oauth-bearer', {
   session: false,

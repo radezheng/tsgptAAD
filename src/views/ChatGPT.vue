@@ -161,7 +161,8 @@ export default {
               if (!lines[i]) continue;
               if (!lines[i].startsWith("data:")) {
                 // console.log(lines[i]);
-                if (lines[i].indexOf("error") > 0) {
+                if (lines[i].indexOf("error") > 0 || lines[i].indexOf("Error") > 0 
+                  || lines[i].indexOf("\"statusCode\": 429") > 0) {
                   this.addMessage({ role: "assistant", content: lines[i] });
                 }
                 continue;

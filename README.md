@@ -148,6 +148,9 @@ https://<depoyment_id>.openai.azure.com/openai/deployments/<model_id>
 ## [可选] API的监控与审计
 ![monitor](./images/apim_monitor.png)
 
+
+## [可选] Token实时计数
+可使用Azure Stream Analytics + Azure Function实现，参考 https://github.com/radezheng/tkcount
 ## 如果本地开发调试
 - 按前面部署好Azure服务准备
 - 修改 .\script\createForLocal.ps1 的值 。还是需要配置AAD，DB和APIM.
